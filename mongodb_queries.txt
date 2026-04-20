@@ -1,0 +1,162 @@
+// ==========================================
+// MONGODB QUERIES FOR EMPLOYEE MANAGEMENT SYSTEM
+// ==========================================
+// Note: Your application uses 'Mongoose' in Node.js to execute these.
+// Below are the raw MongoDB Shell (mongosh) equivalents of the operations
+// your backend performs.
+
+// ---------------------------------------------------------
+// 1. DATABASE & SETUP
+// ---------------------------------------------------------
+
+// Switch to the database
+use employeeDB;
+
+// Create Unique Indexes (this prevents duplicate emails or employee IDs)
+db.users.createIndex({ "email": 1 }, { unique: true });
+db.users.createIndex({ "employeeId": 1 }, { unique: true, sparse: true });
+
+// ---------------------------------------------------------
+// 2. AUTHENTICATION & USERS (authController.js)
+// ---------------------------------------------------------
+
+// A. Employee Signup (Insert a new pending user with documents)
+db.users.insertOne({
+  name: "Jane Doe",
+  email: "jane@example.com",
+  password: "$2a$10$hashedpassword...", // hashed via bcrypt
+  role: "employee",
+  status: "pending",
+  phone: "9876543210",
+  city: "Pune",
+  bloodGroup: "B+",
+  documents: [
+    {
+      filename: "17000000-resume.pdf",
+      originalName: "resume.pdf",
+      path: "/uploads/documents/17000000-resume.pdf",
+      mimetype: "application/pdf",
+      docType: "Resume",
+      uploadedAt: new Date()
+    }
+  ],
+  createdAt: new Date(),
+  updatedAt: new Date()
+});
+
+// B. User Login (Find user by email)
+db.users.findOne({ email: "jane@example.com" });
+
+// C. Get Current Logged In User Profile (Exclude password)
+db.users.findOne(
+  { _id: ObjectId("user_id_here") },
+  { password: 0 } // 0 means exclude this field
+);
+
+
+// ---------------------------------------------------------
+// 3. ADMIN OPERATIONS (adminController.js)
+// ---------------------------------------------------------
+
+// A. Get all employees (Excluding passwords, sorting by newest first)
+db.users.find({ role: "employee" }, { password: 0 }).sort({ createdAt: -1 });
+
+// B. Update an employee's status (Approve/Reject)
+db.users.updateOne(
+  { _id: ObjectId("user_id_here") },
+  { $set: { status: "approved" } }
+);
+
+// C. Delete an employee
+db.users.deleteOne({ _id: ObjectId("user_id_here") });
+
+
+// ---------------------------------------------------------
+// 4. LEAVE MANAGEMENT (leaveController.js)
+// ---------------------------------------------------------
+
+// A. Apply for a leave (Insert new leave record)
+db.leaves.insertOne({
+  userId: ObjectId("user_id_here"),
+  employeeId: "EMP001",
+  employeeName: "Jane Doe",
+  leaveType: "annual",
+  fromDate: new Date("2024-05-10"),
+  toDate: new Date("2024-05-15"),
+  reason: "Going on a family vacation",
+  status: "pending",
+  adminComment: "",
+  createdAt: new Date(),
+  updatedAt: new Date()
+});
+
+// B. Get all leaves for a specific employee
+db.leaves.find({ userId: ObjectId("user_id_here") }).sort({ createdAt: -1 });
+
+// C. Admin: Get all leaves in the system
+db.leaves.find().sort({ createdAt: -1 });
+
+// D. Admin: Approve or Reject a leave with a comment
+db.leaves.updateOne(
+  { _id: ObjectId("leave_id_here") },
+  { 
+    $set: { 
+      status: "approved", 
+      adminComment: "Enjoy your vacation!" 
+    } 
+  }
+);
+
+
+// ---------------------------------------------------------
+// 5. SALARY MANAGEMENT (salaryController.js)
+// ---------------------------------------------------------
+
+// A. Add a new salary record for an employee
+db.salaries.insertOne({
+  userId: ObjectId("user_id_here"),
+  employeeId: "EMP001",
+  employeeName: "Jane Doe",
+  month: "2024-04",
+  basic: 60000,
+  bonus: 5000,
+  deductions: 1000,
+  netSalary: 64000,
+  notes: "April Salary",
+  createdAt: new Date(),
+  updatedAt: new Date()
+});
+
+// B. Get salary history for a specific employee
+db.salaries.find({ userId: ObjectId("user_id_here") }).sort({ month: -1 });
+
+
+// ---------------------------------------------------------
+// 6. DASHBOARD STATISTICS & AGGREGATIONS (employeeController.js)
+// ---------------------------------------------------------
+
+// A. Count total, approved, rejected, and pending leaves for an employee
+db.leaves.countDocuments({ userId: ObjectId("user_id_here") });
+db.leaves.countDocuments({ userId: ObjectId("user_id_here"), status: "approved" });
+
+// B. Get Leave Trend for the last 6 months (Aggregation Pipeline)
+db.leaves.aggregate([
+  { 
+    $match: { 
+      userId: ObjectId("user_id_here"), 
+      createdAt: { $gte: new ISODate("2023-10-01T00:00:00Z") } // 6 months ago
+    } 
+  },
+  {
+    $group: {
+      _id: { 
+        year: { $year: "$createdAt" }, 
+        month: { $month: "$createdAt" } 
+      },
+      count: { $sum: 1 } // Count how many leaves per month
+    }
+  },
+  { 
+    $sort: { "_id.year": 1, "_id.month": 1 } // Sort chronologically
+  }
+]);
