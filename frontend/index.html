@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EmpSphere — Employee Management System</title>
+  <meta name="description" content="EmpSphere - A modern, full-featured Employee Management System with Admin and Employee dashboards." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0e1a;
+      --bg2: #0f1525;
+      --surface: #141929;
+      --surface2: #1a2035;
+      --border: #1f2d4a;
+      --accent: #6366f1;
+      --accent2: #8b5cf6;
+      --gold: #f59e0b;
+      --text: #e2e8f0;
+      --text2: #94a3b8;
+      --success: #10b981;
+      --danger: #ef4444;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: 
+        radial-gradient(ellipse at 20% 50%, rgba(99,102,241,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(139,92,246,0.12) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(245,158,11,0.06) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .hero {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 2rem;
+      max-width: 700px;
+      animation: fadeInUp 0.8s ease both;
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1.5rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      box-shadow: 0 0 40px rgba(99,102,241,0.4);
+    }
+
+    h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #e2e8f0, #6366f1, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+      line-height: 1.1;
+    }
+
+    .tagline {
+      font-size: 1.2rem;
+      color: var(--text2);
+      margin-bottom: 3rem;
+      font-weight: 400;
+    }
+
+    .cards {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem 2.5rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      color: inherit;
+      min-width: 200px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.3s;
+      border-radius: 20px;
+    }
+
+    .card.admin::before { background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.1)); }
+    .card.emp::before { background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(6,182,212,0.1)); }
+
+    .card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(99,102,241,0.5);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    .card:hover::before { opacity: 1; }
+
+    .card-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .card h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .card p {
+      font-size: 0.9rem;
+      color: var(--text2);
+    }
+
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: var(--border);
+      margin: 2rem 0;
+    }
+
+    .links {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.7rem 1.5rem;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+      border: 1px solid var(--border);
+      color: var(--text2);
+      background: transparent;
+    }
+
+    .btn:hover {
+      background: var(--surface2);
+      color: var(--text);
+      border-color: var(--accent);
+    }
+
+    .badge {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: white;
+      padding: 0.2rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      letter-spacing: 0.05em;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Floating particles */
+    .particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      animation: float linear infinite;
+      opacity: 0.3;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.3; }
+      90% { opacity: 0.3; }
+      100% { transform: translateY(-100px) rotate(720deg); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="particles" id="particles"></div>
+
+  <div class="hero">
+    <div class="badge">✨ Enterprise Grade</div>
+    <div class="logo">🏢</div>
+    <h1>EmpSphere</h1>
+    <p class="tagline">A complete Employee Management System with real-time analytics, leave tracking, and salary management.</p>
+
+    <div class="cards">
+      <a href="/admin.html" class="card admin" id="admin-card">
+        <div class="card-icon">👨‍💼</div>
+        <h2>Admin Panel</h2>
+        <p>Manage employees, approve requests & view analytics</p>
+      </a>
+      <a href="/employee.html" class="card emp" id="employee-card">
+        <div class="card-icon">👤</div>
+        <h2>Employee Portal</h2>
+        <p>View profile, apply leave & check salary</p>
+      </a>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="links">
+      <a href="/login.html" class="btn" id="login-btn">🔐 Login</a>
+      <a href="/signup.html" class="btn" id="signup-btn">📝 Sign Up</a>
+    </div>
+  </div>
+
+  <script>
+    // Create floating particles
+    const container = document.getElementById('particles');
+    const colors = ['#6366f1', '#8b5cf6', '#f59e0b', '#10b981', '#06b6d4'];
+    for (let i = 0; i < 20; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = Math.random() * 8 + 3;
+      p.style.cssText = `
+        width: ${size}px;
+        height: ${size}px;
+        background: ${colors[Math.floor(Math.random() * colors.length)]};
+        left: ${Math.random() * 100}%;
+        animation-duration: ${Math.random() * 15 + 10}s;
+        animation-delay: ${Math.random() * 10}s;
+      `;
+      container.appendChild(p);
+    }
+
+    // Redirect if already logged in
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    if (token && role === 'admin') {
+      window.location.href = '/admin.html';
+    } else if (token && role === 'employee') {
+      window.location.href = '/employee.html';
+    }
+  </script>
+</body>
+</html>

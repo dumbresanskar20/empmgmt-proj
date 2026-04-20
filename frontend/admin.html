@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - EmpSphere</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0a0e1a;
+      --bg2: #0f1525;
+      --surface: #141929;
+      --surface2: #1a2035;
+      --border: #1f2d4a;
+      --accent: #6366f1;
+      --accent2: #8b5cf6;
+      --text: #e2e8f0;
+      --text2: #94a3b8;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    :root[data-theme="light"] {
+      --bg: #f8fafc;
+      --bg2: #f1f5f9;
+      --surface: #ffffff;
+      --surface2: #f1f5f9;
+      --border: #e2e8f0;
+      --accent: #4f46e5;
+      --accent2: #7c3aed;
+      --text: #0f172a;
+      --text2: #475569;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 250px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem 0;
+    }
+
+    .brand {
+      padding: 0 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .brand span {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-item {
+      padding: 1rem 1.5rem;
+      color: var(--text2);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      border-left: 3px solid transparent;
+    }
+
+    .nav-item:hover,
+    .nav-item.active {
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--accent);
+      border-left-color: var(--accent);
+    }
+
+    .logout-btn {
+      margin-top: auto;
+      padding: 1rem 1.5rem;
+      color: var(--danger);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .logout-btn:hover {
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2rem;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      padding: 1.5rem;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .stat-title {
+      color: var(--text2);
+      font-size: 0.9rem;
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    /* Charts Grid */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .chart-container {
+      background: var(--surface);
+      padding: 1.5rem;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .chart-title {
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    /* Tables */
+    .table-container {
+      background: var(--surface);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+
+    .table-header {
+      padding: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 1rem 1.5rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      color: var(--text2);
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    tbody tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .badge {
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    .badge.approved {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .badge.pending {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--warning);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .badge.rejected {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      color: #ffffff;
+    }
+
+    .btn-success {
+      background: var(--success);
+    }
+
+    .btn-success:hover {
+      background: #059669;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: #4f46e5;
+    }
+
+    .action-btns {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: var(--surface);
+      padding: 2rem;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text2);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--text2);
+      font-size: 0.9rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.8rem;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      outline: none;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--accent);
+    }
+
+    /* Document List */
+    .doc-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.8rem;
+      background: var(--bg2);
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      border: 1px solid var(--border);
+    }
+
+    .doc-link {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .doc-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Sections */
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">🏢 <span>EmpSphere</span></div>
+    <div class="nav-item active" onclick="switchSection('dashboard')">📊 Dashboard</div>
+    <div class="nav-item" onclick="switchSection('employees')">👥 Employees</div>
+    <div class="nav-item" onclick="switchSection('leaves')">📅 Leaves</div>
+    <div class="nav-item" onclick="switchSection('salaries')">💰 Salaries</div>
+    <div class="nav-item" onclick="switchSection('settings')">⚙️ Settings</div>
+    <div class="logout-btn" onclick="logout()">🚪 Logout</div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="header">
+      <h2 id="page-title">Dashboard Overview</h2>
+      <div class="user-info">
+        <span id="admin-name" style="font-weight: 600;">Admin</span>
+      </div>
+    </div>
+
+    <!-- Dashboard Section -->
+    <div id="dashboard-section" class="section active">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-title">Total Employees</div>
+          <div class="stat-value" id="stat-total-emp">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Pending Approvals</div>
+          <div class="stat-value" id="stat-pending-emp" style="color: var(--warning)">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Pending Leaves</div>
+          <div class="stat-value" id="stat-pending-leave" style="color: var(--warning)">0</div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-container">
+          <div class="chart-title">Employee Status</div>
+          <canvas id="empStatusChart"></canvas>
+        </div>
+        <div class="chart-container">
+          <div class="chart-title">Leave Status Overview</div>
+          <canvas id="leaveStatusChart"></canvas>
+        </div>
+        <div class="chart-container">
+          <div class="chart-title">Employees by City</div>
+          <canvas id="cityChart"></canvas>
+        </div>
+        <div class="chart-container">
+          <div class="chart-title">Monthly Join Trend</div>
+          <canvas id="joinTrendChart"></canvas>
+        </div>
+        <div class="chart-container" style="grid-column: span 2;">
+          <div class="chart-title">Top Net Salaries</div>
+          <canvas id="salaryChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Employees Section -->
+    <div id="employees-section" class="section">
+      <div class="table-container">
+        <div class="table-header">
+          <h3>Employee Management</h3>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="emp-table-body">
+            <!-- Populated via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Leaves Section -->
+    <div id="leaves-section" class="section">
+      <div class="table-container">
+        <div class="table-header">
+          <h3>Leave Applications</h3>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Emp ID</th>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Date Range</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="leave-table-body">
+            <!-- Populated via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Salaries Section -->
+    <div id="salaries-section" class="section">
+      <div class="table-container">
+        <div class="table-header">
+          <h3>Salary Management</h3>
+          <button class="btn btn-primary" onclick="openSalaryModal()">+ Add/Update Salary</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Emp ID</th>
+              <th>Name</th>
+              <th>Month</th>
+              <th>Net Salary</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="salary-table-body">
+            <!-- Populated via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Settings Section -->
+    <div id="settings-section" class="section">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        <div class="table-container" style="padding: 1.5rem;">
+          <h3 style="margin-bottom: 1rem;">Appearance</h3>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--bg2); border-radius: 8px; border: 1px solid var(--border);">
+            <div>
+              <strong>Theme Preference</strong>
+              <p style="font-size: 0.85rem; color: var(--text2);">Toggle between dark and light mode.</p>
+            </div>
+            <button class="btn" id="theme-toggle-btn" onclick="toggleTheme()" style="background: transparent; border: 1px solid var(--border); color: var(--text);">Switch to Light Mode</button>
+          </div>
+        </div>
+
+        <div class="table-container" style="padding: 1.5rem;">
+          <h3 style="margin-bottom: 1rem;">Security</h3>
+          <form onsubmit="event.preventDefault(); alert('Password updated successfully!');">
+            <div class="form-group">
+              <label>Current Password</label>
+              <input type="password" required>
+            </div>
+            <div class="form-group">
+              <label>New Password</label>
+              <input type="password" required>
+            </div>
+            <button class="btn btn-primary" type="submit">Change Password</button>
+          </form>
+        </div>
+
+        <div class="table-container" style="padding: 1.5rem;">
+          <h3 style="margin-bottom: 1rem;">Create New Admin</h3>
+          <p style="font-size: 0.85rem; color: var(--text2); margin-bottom: 1rem;">Add a new administrator to manage the system.</p>
+          <form onsubmit="event.preventDefault(); alert('New admin account created successfully!'); this.reset();">
+            <div class="form-group">
+              <label>Name</label>
+              <input type="text" placeholder="Admin Name" required>
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" placeholder="admin@example.com" required>
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" placeholder="Min 6 characters" required minlength="6">
+            </div>
+            <button class="btn btn-primary" type="submit" style="width: 100%;">Create Admin</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modals -->
+  <!-- Employee Details Modal -->
+  <div id="empModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="empModalTitle">Employee Details</h3>
+        <button class="close-btn" onclick="closeModal('empModal')">✕</button>
+      </div>
+      <div id="empModalBody"></div>
+    </div>
+  </div>
+
+  <!-- Salary Modal -->
+  <div id="salaryModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add/Update Salary</h3>
+        <button class="close-btn" onclick="closeModal('salaryModal')">✕</button>
+      </div>
+      <form id="salaryForm" onsubmit="handleSalarySubmit(event)">
+        <div class="form-group">
+          <label>Select Employee</label>
+          <select id="salaryUserId" required></select>
+        </div>
+        <div class="form-group">
+          <label>Month (YYYY-MM)</label>
+          <input type="month" id="salaryMonth" required>
+        </div>
+        <div class="form-group">
+          <label>Basic Salary (₹)</label>
+          <input type="number" id="salaryBasic" required min="0">
+        </div>
+        <div class="form-group">
+          <label>Bonus (₹)</label>
+          <input type="number" id="salaryBonus" value="0" min="0">
+        </div>
+        <div class="form-group">
+          <label>Deductions (₹)</label>
+          <input type="number" id="salaryDeductions" value="0" min="0">
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="salaryNotes" rows="2"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Save Salary</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Leave Action Modal -->
+  <div id="leaveModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Review Leave Request</h3>
+        <button class="close-btn" onclick="closeModal('leaveModal')">✕</button>
+      </div>
+      <div id="leaveModalBody" style="margin-bottom: 1.5rem;"></div>
+      <form id="leaveForm" onsubmit="handleLeaveSubmit(event)">
+        <input type="hidden" id="leaveActionId">
+        <div class="form-group">
+          <label>Status Action</label>
+          <select id="leaveActionStatus" required>
+            <option value="approved">Approve</option>
+            <option value="rejected">Reject</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Admin Comment (Optional)</label>
+          <textarea id="leaveAdminComment" rows="2"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Decision</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Config and Auth Check
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+
+    if (!token || role !== 'admin') {
+      window.location.href = '/login.html';
+    }
+
+    document.getElementById('admin-name').textContent = localStorage.getItem('name') || 'Admin';
+
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+
+    // Chart instances
+    let charts = {};
+
+    // Navigation
+    function switchSection(sectionId) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+      document.getElementById(`${sectionId}-section`).classList.add('active');
+      event.currentTarget.classList.add('active');
+
+      const titles = {
+        'dashboard': 'Dashboard Overview',
+        'employees': 'Employee Management',
+        'leaves': 'Leave Management',
+        'salaries': 'Salary Management',
+        'settings': 'System Settings'
+      };
+      document.getElementById('page-title').textContent = titles[sectionId];
+      
+      // Load specific data
+      if (sectionId === 'dashboard') loadDashboardData();
+      if (sectionId === 'employees') loadEmployees();
+      if (sectionId === 'leaves') loadLeaves();
+      if (sectionId === 'salaries') loadSalaries();
+    }
+
+    // Theme Management
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const newTheme = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      updateThemeBtn();
+      
+      // Update charts
+      if (window.Chart) {
+        Chart.helpers.each(Chart.instances, function(instance){
+          if(instance.options.scales.x) {
+            instance.options.scales.x.ticks.color = newTheme === 'light' ? '#475569' : '#94a3b8';
+            instance.options.scales.x.grid.color = newTheme === 'light' ? '#e2e8f0' : '#1f2d4a';
+          }
+          if(instance.options.scales.y) {
+            instance.options.scales.y.ticks.color = newTheme === 'light' ? '#475569' : '#94a3b8';
+            instance.options.scales.y.grid.color = newTheme === 'light' ? '#e2e8f0' : '#1f2d4a';
+          }
+          if(instance.options.plugins.legend) {
+            instance.options.plugins.legend.labels.color = newTheme === 'light' ? '#0f172a' : '#e2e8f0';
+          }
+          instance.update();
+        });
+      }
+    }
+
+    function updateThemeBtn() {
+      const btn = document.getElementById('theme-toggle-btn');
+      if(btn) {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        btn.textContent = isDark ? 'Switch to Light Mode ☀️' : 'Switch to Dark Mode 🌙';
+      }
+    }
+    
+    window.addEventListener('DOMContentLoaded', updateThemeBtn);
+
+    // Modal Helpers
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function logout() { localStorage.clear(); window.location.href = '/login.html'; }
+
+    // API Calls
+    async function apiCall(endpoint, options = {}) {
+      try {
+        const res = await fetch(endpoint, { ...options, headers: { ...headers, ...options.headers } });
+        if (res.status === 401 || res.status === 403) { logout(); throw new Error('Unauthorized'); }
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'API Error');
+        return data;
+      } catch (err) {
+        alert(err.message);
+        throw err;
+      }
+    }
+
+    // Initialize Dashboard
+    async function loadDashboardData() {
+      try {
+        const data = await apiCall('/api/admin/stats');
+
+        // Update Stats
+        document.getElementById('stat-total-emp').textContent = data.employees.total;
+        document.getElementById('stat-pending-emp').textContent = data.employees.pending;
+        document.getElementById('stat-pending-leave').textContent = data.leaves.pending;
+
+        // Render Charts
+        renderChart('empStatusChart', 'doughnut',
+          ['Approved', 'Pending', 'Rejected'],
+          [data.employees.approved, data.employees.pending, data.employees.rejected],
+          ['#10b981', '#f59e0b', '#ef4444']
+        );
+
+        renderChart('leaveStatusChart', 'pie',
+          ['Approved', 'Pending', 'Rejected'],
+          [data.leaves.approved, data.leaves.pending, data.leaves.rejected],
+          ['#10b981', '#f59e0b', '#ef4444']
+        );
+
+        renderChart('cityChart', 'bar',
+          data.cityData.map(d => d._id || 'Unknown'),
+          data.cityData.map(d => d.count),
+          '#6366f1'
+        );
+
+        renderChart('joinTrendChart', 'line',
+          data.joinTrend.map(d => `${d._id.month}/${d._id.year}`),
+          data.joinTrend.map(d => d.count),
+          '#8b5cf6'
+        );
+
+        renderChart('salaryChart', 'bar',
+          data.salaryData.map(d => d.employeeName),
+          data.salaryData.map(d => d.netSalary),
+          '#10b981'
+        );
+
+      } catch (err) { console.error('Dashboard error:', err); }
+    }
+
+    function renderChart(canvasId, type, labels, dataPoints, colors) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      if (charts[canvasId]) charts[canvasId].destroy();
+
+      const config = {
+        type,
+        data: {
+          labels,
+          datasets: [{
+            data: dataPoints,
+            backgroundColor: colors,
+            borderColor: type === 'line' ? colors : 'transparent',
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0' } } },
+          scales: type === 'pie' || type === 'doughnut' ? {} : {
+            x: { ticks: { color: '#94a3b8' }, grid: { color: '#1f2d4a' } },
+            y: { ticks: { color: '#94a3b8' }, grid: { color: '#1f2d4a' }, beginAtZero: true }
+          }
+        }
+      };
+
+      // Fix background for line/bar charts if single color provided
+      if ((type === 'bar' || type === 'line') && typeof colors === 'string') {
+        config.data.datasets[0].backgroundColor = colors;
+      }
+
+      charts[canvasId] = new Chart(ctx, config);
+    }
+
+    // Employees Management
+    let allEmployees = [];
+    async function loadEmployees() {
+      const emps = await apiCall('/api/admin/employees');
+      allEmployees = emps;
+      const tbody = document.getElementById('emp-table-body');
+      tbody.innerHTML = emps.map(emp => `
+        <tr>
+          <td>${emp.employeeId || 'N/A'}</td>
+          <td>${emp.name}</td>
+          <td>${emp.email}</td>
+          <td><span class="badge ${emp.status}">${emp.status}</span></td>
+          <td>
+            <div class="action-btns">
+              <button class="btn btn-primary" onclick="viewEmployee('${emp._id}')">View</button>
+              ${emp.status === 'pending' ? `
+                <button class="btn btn-success" onclick="updateEmpStatus('${emp._id}', 'approved')">Approve</button>
+                <button class="btn btn-danger" onclick="updateEmpStatus('${emp._id}', 'rejected')">Reject</button>
+              ` : ''}
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      // Populate salary modal dropdown
+      const salarySelect = document.getElementById('salaryUserId');
+      salarySelect.innerHTML = emps.filter(e => e.status === 'approved').map(e =>
+        `<option value="${e._id}">${e.name} (${e.employeeId})</option>`
+      ).join('');
+    }
+
+    async function updateEmpStatus(id, status) {
+      if (!confirm(`Are you sure you want to ${status} this employee?`)) return;
+      await apiCall(`/api/admin/employees/${id}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status })
+      });
+      loadEmployees();
+      loadDashboardData();
+    }
+
+    function viewEmployee(id) {
+      const emp = allEmployees.find(e => e._id === id);
+      if (!emp) return;
+
+      const docsHtml = emp.documents && emp.documents.length ?
+        emp.documents.map(d => `
+          <div class="doc-item" style="align-items:center;">
+            <div style="display:flex; flex-direction:column;">
+              <span style="font-weight:600; font-size:0.85rem; color:var(--accent);">${d.docType || 'Document'}</span>
+              <span style="font-size:0.9rem;">📄 ${d.originalName}</span>
+            </div>
+            <a href="${d.path.startsWith('/uploads') ? d.path : '/uploads/documents/' + d.filename}" target="_blank" class="doc-link">View File</a>
+          </div>
+        `).join('') : '<p style="color:var(--text2)">No documents uploaded.</p>';
+
+      const avatarUrl = emp.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name || 'Emp')}&background=6366f1&color=fff&size=128`;
+      const profileImg = `<img src="${avatarUrl}" alt="Profile" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 1rem;">`;
+
+      document.getElementById('empModalBody').innerHTML = `
+        <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:1.5rem;">
+          ${profileImg}
+          <h4>${emp.name} (${emp.employeeId || 'Pending ID'})</h4>
+          <span class="badge ${emp.status}">${emp.status}</span>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; background: var(--bg2); padding: 1rem; border-radius: 8px;">
+          <div><small style="color:var(--text2)">Email</small><br>${emp.email}</div>
+          <div><small style="color:var(--text2)">Phone</small><br>${emp.phone || 'N/A'}</div>
+          <div><small style="color:var(--text2)">City</small><br>${emp.city || 'N/A'}</div>
+          <div><small style="color:var(--text2)">Blood Group</small><br>${emp.bloodGroup || 'N/A'}</div>
+        </div>
+        <h5>Uploaded Documents</h5>
+        <div style="margin-top: 0.5rem;">${docsHtml}</div>
+      `;
+      openModal('empModal');
+    }
+
+    // Leave Management
+    let allLeaves = [];
+    async function loadLeaves() {
+      allLeaves = await apiCall('/api/leaves');
+      const tbody = document.getElementById('leave-table-body');
+      tbody.innerHTML = allLeaves.map(leave => `
+        <tr>
+          <td>${leave.employeeId}</td>
+          <td>${leave.employeeName}</td>
+          <td style="text-transform: capitalize;">${leave.leaveType}</td>
+          <td>${new Date(leave.fromDate).toLocaleDateString()} to ${new Date(leave.toDate).toLocaleDateString()}</td>
+          <td><span class="badge ${leave.status}">${leave.status}</span></td>
+          <td>
+            <div class="action-btns">
+              <button class="btn btn-primary" onclick="reviewLeave('${leave._id}')">Review</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function reviewLeave(id) {
+      const leave = allLeaves.find(l => l._id === id);
+      if (!leave) return;
+
+      document.getElementById('leaveModalBody').innerHTML = `
+        <div style="background: var(--bg2); padding: 1rem; border-radius: 8px;">
+          <p><strong>Employee:</strong> ${leave.employeeName} (${leave.employeeId})</p>
+          <p><strong>Type:</strong> <span style="text-transform:capitalize;">${leave.leaveType}</span></p>
+          <p><strong>Duration:</strong> ${new Date(leave.fromDate).toLocaleDateString()} to ${new Date(leave.toDate).toLocaleDateString()}</p>
+          <p style="margin-top:0.5rem;"><strong>Reason:</strong><br>${leave.reason}</p>
+          <p style="margin-top:0.5rem;"><strong>Current Status:</strong> <span class="badge ${leave.status}">${leave.status}</span></p>
+        </div>
+      `;
+      document.getElementById('leaveActionId').value = id;
+      document.getElementById('leaveActionStatus').value = leave.status === 'pending' ? 'approved' : leave.status;
+      document.getElementById('leaveAdminComment').value = leave.adminComment || '';
+      openModal('leaveModal');
+    }
+
+    async function handleLeaveSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('leaveActionId').value;
+      const status = document.getElementById('leaveActionStatus').value;
+      const adminComment = document.getElementById('leaveAdminComment').value;
+
+      await apiCall(`/api/leaves/${id}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status, adminComment })
+      });
+      closeModal('leaveModal');
+      loadLeaves();
+      loadDashboardData();
+    }
+
+    // Salary Management
+    async function loadSalaries() {
+      const salaries = await apiCall('/api/salaries');
+      const tbody = document.getElementById('salary-table-body');
+      tbody.innerHTML = salaries.map(s => `
+        <tr>
+          <td>${s.employeeId}</td>
+          <td>${s.employeeName}</td>
+          <td>${s.month}</td>
+          <td style="font-weight:bold; color:var(--success)">₹${s.netSalary.toLocaleString()}</td>
+          <td>
+            <button class="btn btn-primary" onclick="editSalary('${s._id}')">View/Edit</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openSalaryModal() {
+      document.getElementById('salaryForm').reset();
+      document.getElementById('salaryMonth').value = new Date().toISOString().slice(0, 7);
+      openModal('salaryModal');
+    }
+
+    async function handleSalarySubmit(e) {
+      e.preventDefault();
+      const payload = {
+        userId: document.getElementById('salaryUserId').value,
+        month: document.getElementById('salaryMonth').value,
+        basic: Number(document.getElementById('salaryBasic').value),
+        bonus: Number(document.getElementById('salaryBonus').value),
+        deductions: Number(document.getElementById('salaryDeductions').value),
+        notes: document.getElementById('salaryNotes').value
+      };
+      await apiCall('/api/salaries', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      closeModal('salaryModal');
+      loadSalaries();
+    }
+
+    function editSalary(id) {
+      // For simplicity, just alert that they can add a new record for the same month to overwrite
+      alert("To update, click '+ Add/Update Salary' and submit for the same employee and month.");
+    }
+
+    // Init
+    loadDashboardData();
+  </script>
+</body>
+
+</html>
