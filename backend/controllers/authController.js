@@ -7,7 +7,7 @@ const bcrypt = require('bcryptjs');
 // @access  Public
 const signup = async (req, res) => {
   try {
-    const { name, email, password, phone, city, dob, bloodGroup } = req.body;
+    const { name, email, password, phone, city, dob, bloodGroup, department } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email and password are required' });
@@ -41,6 +41,7 @@ const signup = async (req, res) => {
       city,
       dob: dob ? new Date(dob) : undefined,
       bloodGroup,
+      department,
       role: 'employee',
       status: 'pending',
       documents,

@@ -23,6 +23,7 @@ const userSchema = new mongoose.Schema(
     city: { type: String, trim: true },
     dob: { type: Date },
     bloodGroup: { type: String, enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', ''] },
+    department: { type: String, trim: true, default: '' },
     profileImage: { type: String, default: '' },
     documents: [
       {

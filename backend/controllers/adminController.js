@@ -125,12 +125,20 @@ const getAdminStats = async (req, res) => {
       { $limit: 10 },
     ]);
 
+    // Department distribution
+    const departmentData = await User.aggregate([
+      { $match: { role: 'employee', department: { $ne: null, $ne: '' } } },
+      { $group: { _id: '$department', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+    ]);
+
     res.json({
       employees: { total: totalEmployees, approved: approvedCount, pending: pendingCount, rejected: rejectedCount },
       leaves: { total: totalLeaves, approved: approvedLeaves, pending: pendingLeaves, rejected: rejectedLeaves },
       cityData,
       joinTrend,
       salaryData,
+      departmentData,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });

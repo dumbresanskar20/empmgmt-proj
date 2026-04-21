@@ -31,6 +31,7 @@ app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/leaves', require('./routes/leaveRoutes'));
 app.use('/api/salaries', require('./routes/salaryRoutes'));
 app.use('/api/employee', require('./routes/employeeRoutes'));
+app.use('/api/departments', require('./routes/departmentRoutes'));
 
 // Health check
 app.get('/api/health', (req, res) => {

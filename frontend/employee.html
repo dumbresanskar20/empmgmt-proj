@@ -250,6 +250,12 @@
                 </select>
               </div>
             </div>
+            <div class="form-group">
+              <label>Department</label>
+              <select id="prof-dept">
+                <option value="">Loading departments...</option>
+              </select>
+            </div>
             <button type="submit" class="btn btn-primary" style="width: 100%;">Save Changes</button>
           </form>
         </div>
@@ -609,6 +615,20 @@
       );
     }
 
+    // Load departments into profile dropdown
+    async function loadProfileDepts(currentDept) {
+      const sel = document.getElementById('prof-dept');
+      try {
+        const res = await fetch('/api/departments');
+        const depts = await res.json();
+        sel.innerHTML = '<option value="">Select department...</option>' +
+          depts.map(d => `<option value="${d.name}">${d.name}</option>`).join('');
+      } catch {
+        sel.innerHTML = '<option value="">Unable to load</option>';
+      }
+      if (currentDept) sel.value = currentDept;
+    }
+
     // Profile
     async function loadProfile() {
       const profile = await apiCall('/api/employee/profile');
@@ -617,6 +637,7 @@
       document.getElementById('prof-city').value = profile.city || '';
       if (profile.dob) document.getElementById('prof-dob').value = profile.dob.split('T')[0];
       document.getElementById('prof-bg').value = profile.bloodGroup || '';
+      loadProfileDepts(profile.department || '');
       
       const avatarUrl = profile.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'Emp')}&background=6366f1&color=fff&size=128`;
       document.getElementById('profile-large-img').src = avatarUrl;
@@ -646,6 +667,7 @@
         city: document.getElementById('prof-city').value,
         dob: document.getElementById('prof-dob').value,
         bloodGroup: document.getElementById('prof-bg').value,
+        department: document.getElementById('prof-dept').value,
       };
       await apiCall('/api/employee/profile', { method: 'PUT', body: JSON.stringify(payload) });
       alert('Profile updated successfully!');

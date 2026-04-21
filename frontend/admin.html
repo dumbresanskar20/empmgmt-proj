@@ -577,6 +577,7 @@
     <div class="brand">🏢 <span>EmpSphere</span></div>
     <div class="nav-item active" onclick="switchSection('dashboard')">📊 Dashboard</div>
     <div class="nav-item" onclick="switchSection('employees')">👥 Employees</div>
+    <div class="nav-item" onclick="switchSection('departments')">🏬 Departments</div>
     <div class="nav-item" onclick="switchSection('leaves')">📅 Leaves</div>
     <div class="nav-item" onclick="switchSection('salaries')">💰 Salaries</div>
     <div class="nav-item" onclick="switchSection('settings')">⚙️ Settings</div>
@@ -645,6 +646,10 @@
           <canvas id="joinTrendChart"></canvas>
         </div>
         <div class="chart-container" style="grid-column: span 2;">
+          <div class="chart-title">Employees by Department</div>
+          <canvas id="deptDistChart"></canvas>
+        </div>
+        <div class="chart-container" style="grid-column: span 2;">
           <div class="chart-title">Top Net Salaries</div>
           <canvas id="salaryChart"></canvas>
         </div>
@@ -664,11 +669,39 @@
                 <th>ID</th>
                 <th>Name</th>
                 <th>Email</th>
+                <th>Department</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="emp-table-body">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Departments Section -->
+    <div id="departments-section" class="section">
+      <div class="table-container">
+        <div class="table-header">
+          <h3>Department Management</h3>
+          <button class="btn btn-primary" onclick="openDeptModal()">+ Add Department</button>
+        </div>
+        <div class="table-scroll-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Department Name</th>
+                <th>Head</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="dept-table-body">
               <!-- Populated via JS -->
             </tbody>
           </table>
@@ -855,6 +888,32 @@
     </div>
   </div>
 
+  <!-- Department Modal -->
+  <div id="deptModal" class="modal">
+    <div class="modal-content" style="max-width:480px;">
+      <div class="modal-header">
+        <h3 id="deptModalTitle">Add Department</h3>
+        <button class="close-btn" onclick="closeModal('deptModal')">✕</button>
+      </div>
+      <form id="deptForm" onsubmit="handleDeptSubmit(event)">
+        <input type="hidden" id="deptEditId" />
+        <div class="form-group">
+          <label>Department Name <span style="color:var(--danger)">*</span></label>
+          <input type="text" id="deptName" placeholder="e.g. Engineering" required />
+        </div>
+        <div class="form-group">
+          <label>Department Head (Optional)</label>
+          <input type="text" id="deptHead" placeholder="e.g. Jane Doe" />
+        </div>
+        <div class="form-group">
+          <label>Description (Optional)</label>
+          <textarea id="deptDesc" rows="2" placeholder="Brief description..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">Save Department</button>
+      </form>
+    </div>
+  </div>
+
   <script>
     // Config and Auth Check
     const token = localStorage.getItem('token');
@@ -917,11 +976,12 @@
       const titles = {
         'dashboard': 'Dashboard Overview',
         'employees': 'Employee Management',
+        'departments': 'Department Management',
         'leaves': 'Leave Management',
         'salaries': 'Salary Management',
         'settings': 'System Settings'
       };
-      document.getElementById('page-title').textContent = titles[sectionId];
+      document.getElementById('page-title').textContent = titles[sectionId] || sectionId;
 
       // Close sidebar on mobile after nav
       if (window.innerWidth <= 768) closeSidebar();
@@ -929,6 +989,7 @@
       // Load specific data
       if (sectionId === 'dashboard') loadDashboardData();
       if (sectionId === 'employees') loadEmployees();
+      if (sectionId === 'departments') loadDepartments();
       if (sectionId === 'leaves') loadLeaves();
       if (sectionId === 'salaries') loadSalaries();
     }
@@ -1033,6 +1094,23 @@
           '#10b981'
         );
 
+        // Department distribution chart
+        if (data.departmentData && data.departmentData.length) {
+          const deptColors = ['#6366f1','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899','#84cc16','#f97316','#a78bfa'];
+          renderChart('deptDistChart', 'bar',
+            data.departmentData.map(d => d._id || 'Unknown'),
+            data.departmentData.map(d => d.count),
+            deptColors.slice(0, data.departmentData.length)
+          );
+        } else {
+          const ctx = document.getElementById('deptDistChart').getContext('2d');
+          if (charts['deptDistChart']) charts['deptDistChart'].destroy();
+          ctx.font = '14px Inter, sans-serif';
+          ctx.fillStyle = '#94a3b8';
+          ctx.textAlign = 'center';
+          ctx.fillText('No department data yet', ctx.canvas.width / 2, ctx.canvas.height / 2);
+        }
+
       } catch (err) { console.error('Dashboard error:', err); }
     }
 
@@ -1080,6 +1158,11 @@
           <td>${emp.employeeId || 'N/A'}</td>
           <td>${emp.name}</td>
           <td>${emp.email}</td>
+          <td>
+            ${emp.department
+              ? `<span style="background:rgba(99,102,241,0.12);color:var(--accent);border:1px solid rgba(99,102,241,0.25);padding:0.25rem 0.7rem;border-radius:20px;font-size:0.8rem;font-weight:600;">${emp.department}</span>`
+              : `<span style="color:var(--text2);font-size:0.85rem;">—</span>`}
+          </td>
           <td><span class="badge ${emp.status}">${emp.status}</span></td>
           <td>
             <div class="action-btns">
@@ -1139,6 +1222,7 @@
           <div><small style="color:var(--text2)">Phone</small><br>${emp.phone || 'N/A'}</div>
           <div><small style="color:var(--text2)">City</small><br>${emp.city || 'N/A'}</div>
           <div><small style="color:var(--text2)">Blood Group</small><br>${emp.bloodGroup || 'N/A'}</div>
+          <div><small style="color:var(--text2)">Department</small><br>${emp.department || 'N/A'}</div>
         </div>
         <h5>Uploaded Documents</h5>
         <div style="margin-top: 0.5rem;">${docsHtml}</div>
@@ -1245,6 +1329,75 @@
     function editSalary(id) {
       // For simplicity, just alert that they can add a new record for the same month to overwrite
       alert("To update, click '+ Add/Update Salary' and submit for the same employee and month.");
+    }
+
+    // ── Departments Management ──────────────────────────────────────────────
+    let allDepts = [];
+
+    async function loadDepartments() {
+      allDepts = await apiCall('/api/departments');
+      const tbody = document.getElementById('dept-table-body');
+      if (!allDepts.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:2rem;">No departments yet. Click "+ Add Department" to create one.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = allDepts.map((d, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td style="font-weight:600;">${d.name}</td>
+          <td>${d.headName || '<span style="color:var(--text2)">—</span>'}</td>
+          <td style="color:var(--text2);font-size:0.88rem;">${d.description || '—'}</td>
+          <td><span class="badge ${d.isActive ? 'approved' : 'rejected'}">${d.isActive ? 'Active' : 'Inactive'}</span></td>
+          <td>
+            <div class="action-btns">
+              <button class="btn btn-primary" onclick="editDept('${d._id}')">Edit</button>
+              <button class="btn btn-danger" onclick="deleteDept('${d._id}')">Delete</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openDeptModal(dept = null) {
+      document.getElementById('deptForm').reset();
+      document.getElementById('deptEditId').value = '';
+      document.getElementById('deptModalTitle').textContent = 'Add Department';
+      if (dept) {
+        document.getElementById('deptModalTitle').textContent = 'Edit Department';
+        document.getElementById('deptEditId').value = dept._id;
+        document.getElementById('deptName').value = dept.name;
+        document.getElementById('deptHead').value = dept.headName || '';
+        document.getElementById('deptDesc').value = dept.description || '';
+      }
+      openModal('deptModal');
+    }
+
+    function editDept(id) {
+      const dept = allDepts.find(d => d._id === id);
+      if (dept) openDeptModal(dept);
+    }
+
+    async function deleteDept(id) {
+      if (!confirm('Are you sure you want to delete this department?')) return;
+      await apiCall(`/api/departments/${id}`, { method: 'DELETE' });
+      loadDepartments();
+    }
+
+    async function handleDeptSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('deptEditId').value;
+      const payload = {
+        name: document.getElementById('deptName').value.trim(),
+        headName: document.getElementById('deptHead').value.trim(),
+        description: document.getElementById('deptDesc').value.trim(),
+      };
+      if (id) {
+        await apiCall(`/api/departments/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+      } else {
+        await apiCall('/api/departments', { method: 'POST', body: JSON.stringify(payload) });
+      }
+      closeModal('deptModal');
+      loadDepartments();
     }
 
     // Init

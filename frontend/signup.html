@@ -141,6 +141,12 @@
             <option value="O-">O-</option>
           </select>
         </div>
+        <div class="field">
+          <label for="department">Department <span>*</span></label>
+          <select id="department" name="department" required>
+            <option value="">Loading departments...</option>
+          </select>
+        </div>
       </div>
 
       <div class="section-title" style="margin-top:1rem;">Documents <span style="color:var(--danger)">*</span> (At least one required)</div>
@@ -181,6 +187,24 @@
   </div>
 
   <script>
+    // Load departments from backend
+    async function loadDepartments() {
+      const sel = document.getElementById('department');
+      try {
+        const res = await fetch('/api/departments');
+        const depts = await res.json();
+        if (!depts.length) {
+          sel.innerHTML = '<option value="">No departments yet — contact admin</option>';
+          return;
+        }
+        sel.innerHTML = '<option value="">Select department...</option>' +
+          depts.map(d => `<option value="${d.name}">${d.name}${d.headName ? ' — ' + d.headName : ''}</option>`).join('');
+      } catch {
+        sel.innerHTML = '<option value="">Unable to load departments</option>';
+      }
+    }
+    loadDepartments();
+
     let selectedFiles = [];
 
     function handleFiles(fileList) {
@@ -274,6 +298,7 @@
       formData.append('city', document.getElementById('city').value.trim());
       formData.append('dob', document.getElementById('dob').value);
       formData.append('bloodGroup', document.getElementById('bloodGroup').value);
+      formData.append('department', document.getElementById('department').value);
       selectedFiles.forEach(item => {
         formData.append('documents', item.file);
         formData.append('documentTypes', item.docType);

@@ -17,7 +17,7 @@ const getMyProfile = async (req, res) => {
 // @access  Private/Employee
 const updateMyProfile = async (req, res) => {
   try {
-    const { name, phone, city, dob, bloodGroup } = req.body;
+    const { name, phone, city, dob, bloodGroup, department } = req.body;
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
@@ -26,6 +26,7 @@ const updateMyProfile = async (req, res) => {
     if (city) user.city = city;
     if (dob) user.dob = new Date(dob);
     if (bloodGroup) user.bloodGroup = bloodGroup;
+    if (department !== undefined) user.department = department;
 
     await user.save({ validateBeforeSave: false });
     const updated = await User.findById(user._id).select('-password');
