@@ -47,6 +47,13 @@ app.get('*', (req, res) => {
 
 // Global error handler
 app.use((err, req, res, next) => {
+  console.error('🔴 Server Error:', err);
+  
+  // Handle Multer errors specifically
+  if (err instanceof require('multer').MulterError) {
+    return res.status(400).json({ message: `Upload Error: ${err.message}` });
+  }
+
   const statusCode = res.statusCode !== 200 ? res.statusCode : 500;
   res.status(statusCode).json({
     message: err.message || 'Server Error',

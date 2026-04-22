@@ -2,53 +2,38 @@ const multer = require('multer');
 const { GridFsStorage } = require('multer-gridfs-storage');
 const path = require('path');
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
-// Create GridFS storage for Documents
-const documentStorage = new GridFsStorage({
-  url: process.env.MONGO_URI,
-  options: { serverSelectionTimeoutMS: 5000 },
-  file: (req, file) => {
-    return new Promise((resolve, reject) => {
-      crypto.randomBytes(16, (err, buf) => {
-        if (err) return reject(err);
-        const filename = buf.toString('hex') + path.extname(file.originalname);
-        const fileInfo = {
-          filename: filename,
-          bucketName: 'uploads',
-          metadata: {
-            originalName: file.originalname,
-            uploadDate: new Date(),
-          }
-        };
-        resolve(fileInfo);
+// Use a function to return the storage configuration
+// This allows us to use the existing mongoose connection
+const createStorage = (collectionName) => {
+  return new GridFsStorage({
+    // Share the existing mongoose connection
+    db: mongoose.connection.asPromise().then(() => mongoose.connection.db),
+    file: (req, file) => {
+      return new Promise((resolve, reject) => {
+        crypto.randomBytes(16, (err, buf) => {
+          if (err) return reject(err);
+          const filename = buf.toString('hex') + path.extname(file.originalname);
+          const fileInfo = {
+            filename: filename,
+            bucketName: 'uploads',
+            metadata: {
+              originalName: file.originalname,
+              uploadDate: new Date(),
+              fieldName: file.fieldname
+            }
+          };
+          resolve(fileInfo);
+        });
       });
-    });
-  }
-});
+    }
+  });
+};
 
-// Create GridFS storage for Profile Images
-const profileStorage = new GridFsStorage({
-  url: process.env.MONGO_URI,
-  options: { serverSelectionTimeoutMS: 5000 },
-  file: (req, file) => {
-    return new Promise((resolve, reject) => {
-      crypto.randomBytes(16, (err, buf) => {
-        if (err) return reject(err);
-        const filename = 'profile-' + buf.toString('hex') + path.extname(file.originalname);
-        const fileInfo = {
-          filename: filename,
-          bucketName: 'uploads',
-          metadata: {
-            originalName: file.originalname,
-            type: 'profile'
-          }
-        };
-        resolve(fileInfo);
-      });
-    });
-  }
-});
+const documentStorage = createStorage('documents');
+const profileStorage = createStorage('profiles');
 
 const fileFilter = (req, file, cb) => {
   const allowed = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|txt/;
