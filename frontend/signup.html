@@ -334,7 +334,7 @@
         setTimeout(() => { window.location.href = '/login.html'; }, 3000);
       } catch (err) {
         clearInterval(progressInterval);
-        showAlert('Network error. Make sure the server is running on port 5000.', 'error');
+        showAlert(`Network Error: ${err.message}. If you are on Render, check your MONGO_URI and MongoDB Atlas Whitelist (0.0.0.0/0).`, 'error');
         document.getElementById('upload-progress').style.display = 'none';
       } finally {
         btn.disabled = false;
