@@ -3,6 +3,7 @@ const generateToken = require('../utils/generateToken');
 const bcrypt = require('bcryptjs');
 const Document = require('../models/Document');
 const fs = require('fs');
+const { uploadToGridFS } = require('../utils/gridfsHelper');
 
 // @desc    Employee Signup
 // @route   POST /api/auth/signup
@@ -27,15 +28,15 @@ const signup = async (req, res) => {
     const documentTypes = req.body.documentTypes;
     const docTypesArray = Array.isArray(documentTypes) ? documentTypes : [documentTypes];
 
-    const documents = req.files.map((file, index) => {
+    const documents = await Promise.all(req.files.map(async (file, index) => {
+      const uploadedFile = await uploadToGridFS(file.buffer, file.originalname, file.mimetype, {
+        docType: docTypesArray[index] || 'Other'
+      });
       return {
-        filename: file.filename,
-        originalName: file.originalname,
-        path: `/api/files/${file.filename}`, // GridFS streaming path
-        mimetype: file.mimetype,
-        docType: docTypesArray[index] || 'Other',
+        ...uploadedFile,
+        docType: docTypesArray[index] || 'Other'
       };
-    });
+    }));
 
     const user = await User.create({
       name,

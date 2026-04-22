@@ -1,39 +1,9 @@
 const multer = require('multer');
-const { GridFsStorage } = require('multer-gridfs-storage');
 const path = require('path');
-const crypto = require('crypto');
-const mongoose = require('mongoose');
-require('dotenv').config();
 
-// Use a function to return the storage configuration
-// This allows us to use the existing mongoose connection
-const createStorage = (collectionName) => {
-  return new GridFsStorage({
-    // Share the existing mongoose connection
-    db: mongoose.connection.asPromise().then(() => mongoose.connection.db),
-    file: (req, file) => {
-      return new Promise((resolve, reject) => {
-        crypto.randomBytes(16, (err, buf) => {
-          if (err) return reject(err);
-          const filename = buf.toString('hex') + path.extname(file.originalname);
-          const fileInfo = {
-            filename: filename,
-            bucketName: 'uploads',
-            metadata: {
-              originalName: file.originalname,
-              uploadDate: new Date(),
-              fieldName: file.fieldname
-            }
-          };
-          resolve(fileInfo);
-        });
-      });
-    }
-  });
-};
-
-const documentStorage = createStorage('documents');
-const profileStorage = createStorage('profiles');
+// Use memory storage to handle the file buffer manually
+// This avoids dependency conflicts with Mongoose 8 and GridFS
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   const allowed = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|txt/;
@@ -56,13 +26,13 @@ const imageFilter = (req, file, cb) => {
 };
 
 exports.uploadDocuments = multer({
-  storage: documentStorage,
+  storage: storage,
   fileFilter,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
 }).array('documents', 10);
 
 exports.uploadProfile = multer({
-  storage: profileStorage,
+  storage: storage,
   fileFilter: imageFilter,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 }).single('profileImage');

@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Document = require('../models/Document');
 const fs = require('fs');
+const { uploadToGridFS } = require('../utils/gridfsHelper');
 
 // @desc    Get my profile (employee)
 // @route   GET /api/employee/profile
@@ -48,7 +49,8 @@ const uploadProfileImage = async (req, res) => {
     }
 
     const user = await User.findById(req.user._id);
-    user.profileImage = `/api/files/${req.file.filename}`;
+    const uploadedFile = await uploadToGridFS(req.file.buffer, req.file.originalname, req.file.mimetype, { type: 'profile' });
+    user.profileImage = uploadedFile.path;
     await user.save({ validateBeforeSave: false });
 
     res.json({ profileImage: user.profileImage, message: 'Profile image updated' });
@@ -70,15 +72,15 @@ const uploadDocuments = async (req, res) => {
     const documentTypes = req.body.documentTypes;
     const docTypesArray = Array.isArray(documentTypes) ? documentTypes : [documentTypes];
 
-    const newDocs = req.files.map((file, index) => {
+    const newDocs = await Promise.all(req.files.map(async (file, index) => {
+      const uploadedFile = await uploadToGridFS(file.buffer, file.originalname, file.mimetype, {
+        docType: docTypesArray[index] || 'Other'
+      });
       return {
-        filename: file.filename,
-        originalName: file.originalname,
-        path: `/api/files/${file.filename}`, // GridFS streaming path
-        mimetype: file.mimetype,
-        docType: docTypesArray[index] || 'Other',
+        ...uploadedFile,
+        docType: docTypesArray[index] || 'Other'
       };
-    });
+    }));
 
     user.documents.push(...newDocs);
     await user.save({ validateBeforeSave: false });

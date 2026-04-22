@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { getGfs } = require('../config/db');
+const { uploadToGridFS } = require('../utils/gridfsHelper');
 
 // @desc    Upload document image to GridFS
 // @route   POST /api/upload
@@ -9,9 +10,10 @@ const uploadFile = async (req, res, next) => {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded or invalid file type' });
     }
+    const uploadedFile = await uploadToGridFS(req.file.buffer, req.file.originalname, req.file.mimetype);
     res.status(201).json({
       message: 'File uploaded successfully',
-      file: req.file
+      file: uploadedFile
     });
   } catch (err) {
     next(err);
