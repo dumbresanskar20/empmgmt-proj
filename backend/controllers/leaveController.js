@@ -1,5 +1,6 @@
 const Leave = require('../models/Leave');
 const User = require('../models/User');
+const { uploadToGridFS } = require('../utils/gridfsHelper');
 
 // @desc    Apply for leave (employee)
 // @route   POST /api/leaves
@@ -12,6 +13,21 @@ const applyLeave = async (req, res) => {
     }
 
     const user = await User.findById(req.user._id);
+    
+    let prescriptionInfo = {};
+    if (leaveType === 'sick' && req.file) {
+      const uploadedFile = await uploadToGridFS(req.file.buffer, req.file.originalname, req.file.mimetype, {
+        type: 'prescription',
+        employeeId: user.employeeId
+      });
+      prescriptionInfo = {
+        prescriptionPath: uploadedFile.path,
+        prescriptionFilename: uploadedFile.filename
+      };
+    } else if (leaveType === 'sick' && !req.file) {
+      return res.status(400).json({ message: 'Prescription is required for sick leave' });
+    }
+
     const leave = await Leave.create({
       userId: req.user._id,
       employeeId: user.employeeId,
@@ -20,6 +36,7 @@ const applyLeave = async (req, res) => {
       fromDate: new Date(fromDate),
       toDate: new Date(toDate),
       reason,
+      ...prescriptionInfo
     });
 
     res.status(201).json(leave);

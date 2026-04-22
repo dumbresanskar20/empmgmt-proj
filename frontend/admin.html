@@ -1262,6 +1262,12 @@
           <p><strong>Duration:</strong> ${new Date(leave.fromDate).toLocaleDateString()} to ${new Date(leave.toDate).toLocaleDateString()}</p>
           <p style="margin-top:0.5rem;"><strong>Reason:</strong><br>${leave.reason}</p>
           <p style="margin-top:0.5rem;"><strong>Current Status:</strong> <span class="badge ${leave.status}">${leave.status}</span></p>
+          ${leave.prescriptionPath ? `
+            <div style="margin-top:1rem; padding:1rem; background:rgba(99,102,241,0.1); border-radius:8px; border:1px solid var(--border);">
+              <p style="margin-bottom:0.5rem; font-weight:600; color:var(--accent);">🩺 Prescription Attached</p>
+              <a href="${leave.prescriptionPath}" target="_blank" class="btn btn-primary" style="display:inline-block; text-decoration:none;">View Prescription</a>
+            </div>
+          ` : ''}
         </div>
       `;
       document.getElementById('leaveActionId').value = id;

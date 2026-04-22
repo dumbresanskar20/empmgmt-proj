@@ -8,9 +8,10 @@ const {
   updateLeaveStatus,
   getMyLeaveStats,
 } = require('../controllers/leaveController');
+const { uploadPrescription } = require('../middleware/uploadMiddleware');
 
 // Employee routes
-router.post('/', protect, applyLeave);
+router.post('/', protect, uploadPrescription, applyLeave);
 router.get('/my', protect, getMyLeaves);
 router.get('/my/stats', protect, getMyLeaveStats);
 

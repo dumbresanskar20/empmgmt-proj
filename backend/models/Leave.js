@@ -15,6 +15,8 @@ const leaveSchema = new mongoose.Schema(
     reason: { type: String, required: true },
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
     adminComment: { type: String, default: '' },
+    prescriptionPath: { type: String },
+    prescriptionFilename: { type: String },
   },
   { timestamps: true }
 );
