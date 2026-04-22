@@ -1,45 +1,30 @@
 const multer = require('multer');
-const { GridFsStorage } = require('multer-gridfs-storage');
-const path = require('path');
-const crypto = require('crypto');
-require('dotenv').config();
+const { uploadToGridFS } = require('../utils/gridfsHelper');
 
-const storage = new GridFsStorage({
-  url: process.env.MONGO_URI,
-  options: { serverSelectionTimeoutMS: 5000 },
-  file: (req, file) => {
-    return new Promise((resolve, reject) => {
-      // Validate file type
-      const allowedFileTypes = /jpeg|jpg|png|gif|webp/;
-      const extname = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
-      const mimetype = allowedFileTypes.test(file.mimetype);
+// Use memory storage
+const storage = multer.memoryStorage();
 
-      if (!extname || !mimetype) {
-        return reject(new Error('Only image files are allowed!'));
-      }
-
-      crypto.randomBytes(16, (err, buf) => {
-        if (err) {
-          return reject(err);
-        }
-        const filename = buf.toString('hex') + path.extname(file.originalname);
-        const fileInfo = {
-          filename: filename,
-          bucketName: 'uploads',
-          metadata: {
-            originalName: file.originalname,
-            uploadDate: new Date(),
-          }
-        };
-        resolve(fileInfo);
-      });
-    });
-  }
-});
-
+// This middleware mimics the behavior of the old gridfs-storage but uses the stable GridFSBucket streaming
+// to avoid the "Unsupported BSON version" error in Mongoose 8.
 const uploadGridFS = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
 });
+
+// Helper for single file upload
+exports.uploadSingle = uploadGridFS.single('file');
+
+// Middleware to handle the actual GridFS streaming after multer-memory-storage
+exports.gridfsHandler = async (req, res, next) => {
+  try {
+    if (!req.file) return next();
+    
+    const uploadedFile = await uploadToGridFS(req.file.buffer, req.file.originalname, req.file.mimetype);
+    req.file.gridfs = uploadedFile; // Attach GridFS info to req.file
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
 
 module.exports = uploadGridFS;
