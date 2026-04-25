@@ -7,12 +7,6 @@ const { startOverdueTaskCron } = require('./utils/cronJobs');
 
 dotenv.config();
 
-// Connect to MongoDB
-connectDB().then(() => {
-  // Start cron jobs after DB connection
-  startOverdueTaskCron();
-});
-
 const app = express();
 
 // Middleware
@@ -68,9 +62,27 @@ app.use((err, req, res, next) => {
   });
 });
 
+// ─── Start Server ONLY after DB connects ────────────────────────────────
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📊 Admin Panel: http://localhost:${PORT}/admin.html`);
-  console.log(`👤 Employee Panel: http://localhost:${PORT}/employee.html`);
-});
+
+const startServer = async () => {
+  try {
+    // 1. Connect to MongoDB FIRST (will exit if fails)
+    await connectDB();
+
+    // 2. Start cron jobs AFTER DB is ready
+    startOverdueTaskCron();
+
+    // 3. Start listening ONLY after DB is connected
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`📊 Admin Panel: http://localhost:${PORT}/admin.html`);
+      console.log(`👤 Employee Panel: http://localhost:${PORT}/employee.html`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error.message);
+    process.exit(1);
+  }
+};
+
+startServer();
